@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#020617" />
+  <title>Lotus Energia Solar - Kits & Comissões</title>
+
+  <style>
+    :root {
+      --bg-main: #020617;
+      --accent-blue: #2563eb;
+      --accent-orange: #f97316;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --border-soft: rgba(148,163,184,0.35);
+      --shadow-soft: 0 18px 45px rgba(15,23,42,0.9);
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #020617 0, #020617 45%, #000000 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
+    .app-shell {
+      width: 100%;
+      max-width: 900px; /* mais largo para desktop */
+      min-height: 100vh;
+      padding: 18px 16px 24px;
+      display: flex;
+      flex-direction: column;
+    }
+    .glass {
+      background: linear-gradient(150deg, rgba(15,23,42,0.98), rgba(15,23,42,0.94));
+      border-radius: 24px;
+      padding: 14px 16px 18px;
+      border: 1px solid var(--border-soft);
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      overflow: hidden;
+    }
+    .glass::before {
+      content: "";
+      position: absolute;
+      inset: -120px;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(59,130,246,0.18) 0, transparent 55%),
+        radial-gradient(circle at 100% 0%, rgba(249,115,22,0.16) 0, transparent 55%);
+      pointer-events: none;
+    }
+    .glass-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* HEADER (sem logo) */
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      margin-bottom: 12px;
+    }
+    .header-text h1 {
+      font-size: 18px;
+      margin: 0;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #e5e7eb;
+    }
+    .header-text p {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15,23,42,0.9);
+      border-radius: 999px;
+      padding: 4px 10px;
+      border: 1px solid rgba(55,65,81,0.9);
+      margin-top: 6px;
+    }
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: radial-gradient(circle, #22c55e, #16a34a);
+      box-shadow: 0 0 0 4px rgba(34,197,94,0.16);
+    }
+    .badge span {
+      font-size: 11px;
+      color: #d1d5db;
+    }
+
+    .section-title {
+      margin: 12px 0 6px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      color: #6b7280;
+    }
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 0 0, rgba(37,99,235,0.28), rgba(15,23,42,0.98));
+      border: 1px solid rgba(30,64,175,0.7);
+      margin-bottom: 10px;
+    }
+    .search-bar input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #e5e7eb;
+      font-size: 13px;
+    }
+    .search-bar input::placeholder {
+      color: #6b7280;
+    }
+    .search-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15,23,42,0.95);
+      border: 1px solid rgba(148,163,184,0.55);
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    .kits-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .kit-card {
+      position: relative;
+      padding: 10px 11px;
+      border-radius: 16px;
+      background: radial-gradient(circle at 0 0, rgba(37,99,235,0.2), rgba(15,23,42,0.98));
+      border: 1px solid rgba(30,64,175,0.95);
+      box-shadow: 0 10px 25px rgba(15,23,42,0.9);
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    }
+    .kit-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 40px rgba(15,23,42,0.95);
+      border-color: rgba(59,130,246,1);
+    }
+    .kit-kwh {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      color: #e5e7eb;
+    }
+    .kit-sub {
+      font-size: 11px;
+      color: #93c5fd;
+      margin-top: 2px;
+    }
+    .kit-pill {
+      position: absolute;
+      right: 9px;
+      bottom: 8px;
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      color: #bfdbfe;
+      background: radial-gradient(circle at 0 0, rgba(30,64,175,0.9), rgba(15,23,42,0.98));
+    }
+
+    .bottom-hint {
+      margin-top: 10px;
+      font-size: 11px;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dot-soft {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(59,130,246,0.65);
+    }
+
+    .screen {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+    }
+    .screen.active {
+      display: flex;
+    }
+    .screen-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      gap: 12px;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      background: radial-gradient(circle at 0 0, rgba(15,23,42,0.95), rgba(15,23,42,1));
+      color: #e5e7eb;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .back-btn span {
+      font-size: 14px;
+    }
+    .kit-name {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #e5e7eb;
+    }
+    .kit-meta {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .info-card {
+      padding: 9px 10px;
+      border-radius: 14px;
+      background: rgba(15,23,42,0.98);
+      border: 1px solid rgba(55,65,81,0.9);
+    }
+    .info-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .field-label {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 4px;
+      margin-bottom: 2px;
+    }
+    .fake-output {
+      margin-top: 2px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      border: 1px dashed rgba(75,85,99,0.9);
+      font-size: 12px;
+      color: #e5e7eb;
+      background: rgba(15,23,42,0.95);
+    }
+    .input-number,
+    .input-text {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(75,85,99,0.9);
+      font-size: 12px;
+      background: rgba(15,23,42,0.95);
+      color: #e5e7eb;
+    }
+    .input-number::placeholder,
+    .input-text::placeholder {
+      color: #6b7280;
+    }
+
+    .rules-card {
+      padding: 10px 11px;
+      border-radius: 14px;
+      background: rgba(15,23,42,1);
+      border: 1px solid rgba(55,65,81,1);
+      margin-top: 6px;
+    }
+    .rules-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+    .rules-ul {
+      margin: 0;
+      padding-left: 16px;
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    .rules-ul li {
+      margin-bottom: 3px;
+    }
+
+    .actions-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: none;
+      font-size: 12px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #f9fafb;
+      cursor: pointer;
+    }
+    .btn-ghost {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      font-size: 12px;
+      background: rgba(15,23,42,0.95);
+      color: #e5e7eb;
+      cursor: pointer;
+    }
+    .btn-admin-link {
+      margin-top: 8px;
+      font-size: 11px;
+      color: #9ca3af;
+      text-decoration: underline;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .admin-panel {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px dashed rgba(148,163,184,0.6);
+      background: rgba(15,23,42,0.97);
+      display: none;
+    }
+    .admin-panel.active {
+      display: block;
+    }
+    .admin-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #9ca3af;
+      margin-bottom: 4px;
+    }
+    .admin-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    .admin-row .field-group {
+      flex: 1;
+      min-width: 120px;
+    }
+    .field-group label {
+      display: block;
+      font-size: 11px;
+      color: #9ca3af;
+      margin-bottom: 2px;
+    }
+
+    .footer-note {
+      margin-top: 10px;
+      font-size: 10px;
+      color: #6b7280;
+      text-align: right;
+    }
+
+    .msg-erro {
+      margin-top: 6px;
+      font-size: 11px;
+      color: #f97316;
+    }
+    .msg-ok {
+      margin-top: 6px;
+      font-size: 11px;
+      color: #4ade80;
+    }
+
+    .cadastro-resumo {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 600px) {
+      .kits-grid {
+        grid-template-columns: 1fr;
+      }
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .kits-grid {
+        grid-template-columns: repeat(4, minmax(0,1fr));
+      }
+      .info-grid {
+        grid-template-columns: repeat(3, minmax(0,1fr));
+      }
+      .screen-header {
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="glass">
+      <div class="glass-inner">
+
+        <!-- TELA HOME -->
+        <div id="home" class="screen active">
+          <div class="header">
+            <div class="header-text">
+              <h1>Lotus Energia Solar</h1>
+              <p>App interno de <b>tabela de kits, descontos e comissões.</b></p>
+              <div class="badge">
+                <div class="badge-dot"></div>
+                <span>Uso exclusivo da equipe comercial</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title">Kits de geração (kWh)</div>
+
+          <div class="search-bar">
+            <div class="search-icon">🔍</div>
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Buscar kit por kWh (ex: 1200)"
+              oninput="filterKits()" />
+          </div>
+
+          <div id="kitsGrid" class="kits-grid"></div>
+
+          <div class="bottom-hint">
+            <div class="dot-soft"></div>
+            <span>Toque em um kit para simular, cadastrar cliente e enviar no WhatsApp.</span>
+          </div>
+        </div>
+
+        <!-- TELA DO KIT -->
+        <div id="kitView" class="screen">
+          <div class="screen-header">
+            <button class="back-btn" onclick="goHome()">
+              <span>←</span> Voltar
+            </button>
+            <div>
+              <div class="kit-name" id="kitTitle">KIT XXXX kWh</div>
+              <div class="kit-meta">Gestor define preços. Vendedor aplica desconto permitido.</div>
+            </div>
+          </div>
+
+          <!-- VALORES BASE -->
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="info-label">Valores base</div>
+              <div class="field-label">Valor sugerido (cheio)</div>
+              <div id="valorSugeridoView" class="fake-output">R$ 0,00</div>
+              <div class="field-label">Comissão no sugerido (10%)</div>
+              <div id="comissaoCheiaView" class="fake-output">R$ 0,00</div>
+            </div>
+            <div class="info-card">
+              <div class="info-label">Mínimo permitido</div>
+              <div class="field-label">Valor mínimo de venda</div>
+              <div id="valorMinimoView" class="fake-output">R$ 0,00</div>
+              <div class="field-label">Comissão no mínimo (3%)</div>
+              <div id="comissaoMinimaView" class="fake-output">R$ 0,00</div>
+            </div>
+          </div>
+
+          <!-- SIMULAÇÃO VENDA -->
+          <div class="info-card">
+            <div class="info-label">Simulação de venda (vendedor)</div>
+            <div class="field-label">Valor final de venda (R$)</div>
+            <input
+              id="valorVenda"
+              class="input-number"
+              type="number"
+              inputmode="decimal"
+              placeholder="ex: 20000" />
+            <div class="field-label">Resultado da simulação</div>
+            <div id="comissaoVendaView" class="fake-output">
+              Venda: R$ 0,00 • Comissão: R$ 0,00 (0,00%)
+            </div>
+            <div id="mensagemVenda" class="msg-erro"></div>
+            <div class="actions-row">
+              <button class="btn-primary" onclick="calcularComissaoVenda()">Calcular comissão</button>
+            </div>
+          </div>
+
+          <!-- REGRAS -->
+          <div class="rules-card">
+            <div class="rules-title">Regras deste kit</div>
+            <ul class="rules-ul">
+              <li>Preço sugerido: comissão de <b>10%</b>.</li>
+              <li>Preço mínimo de venda: comissão de <b>3%</b>.</li>
+              <li>Entre sugerido e mínimo, a comissão é proporcional entre 3% e 10%.</li>
+              <li>Vendedor não pode vender abaixo do valor mínimo.</li>
+            </ul>
+          </div>
+
+          <!-- FORMULÁRIO CLIENTE -->
+          <div class="info-card" style="margin-top:10px;">
+            <div class="info-label">Cadastro de cliente (vendedor)</div>
+
+            <div class="field-label">Nome do vendedor responsável *</div>
+            <input id="cadVendedor" class="input-text" type="text" placeholder="Ex: João Silva" />
+
+            <div class="field-label">Nome completo do cliente *</div>
+            <input id="cadNome" class="input-text" type="text" placeholder="Ex: Maria de Souza Lima" />
+
+            <div class="field-label">Nome da mãe do cliente *</div>
+            <input id="cadNomeMae" class="input-text" type="text" placeholder="Nome completo da mãe" />
+
+            <div class="field-label">CPF *</div>
+            <input id="cadCPF" class="input-text" type="text" placeholder="000.000.000-00" />
+
+            <div class="field-label">CNPJ</div>
+            <input id="cadCNPJ" class="input-text" type="text" placeholder="Somente números (opcional)" />
+
+            <div class="field-label">Data de nascimento *</div>
+            <input id="cadNascimento" class="input-text" type="text" placeholder="dd/mm/aaaa" />
+
+            <div class="field-label">RG *</div>
+            <input id="cadRG" class="input-text" type="text" placeholder="Somente números" />
+
+            <div class="field-label">Contato (telefone / WhatsApp) *</div>
+            <input id="cadContato" class="input-text" type="text" placeholder="(00) 00000-0000" />
+
+            <div class="field-label">E-mail *</div>
+            <input id="cadEmail" class="input-text" type="email" placeholder="cliente@email.com" />
+
+            <div class="field-label">Estado (UF) *</div>
+            <input id="cadEstado" class="input-text" type="text" placeholder="MA, PA, TO..." />
+
+            <div class="field-label">Cidade *</div>
+            <input id="cadCidade" class="input-text" type="text" />
+
+            <div class="field-label">Endereço *</div>
+            <input id="cadEndereco" class="input-text" type="text" placeholder="Rua, nº, bairro" />
+
+            <div class="field-label">Profissão *</div>
+            <input id="cadProfissao" class="input-text" type="text" />
+
+            <div class="field-label">Tempo de profissão *</div>
+            <input id="cadTempoProfissao" class="input-text" type="text" placeholder="Ex: 5 anos" />
+
+            <div class="field-label">Renda mensal (R$) *</div>
+            <input id="cadRenda" class="input-number" type="number" inputmode="decimal" placeholder="Ex: 3500" />
+
+            <div class="actions-row" style="margin-top:10px;">
+              <button class="btn-primary" onclick="salvarCadastroCliente()">Salvar cadastro e enviar no WhatsApp</button>
+            </div>
+
+            <div id="mensagemCadastro" class="msg-erro"></div>
+            <div id="resumoCadastros" class="cadastro-resumo"></div>
+          </div>
+
+          <!-- ADMIN -->
+          <button class="btn-admin-link" onclick="ativarAdmin()">
+            Modo administrador (apenas gestor)
+          </button>
+
+          <div id="adminPanel" class="admin-panel">
+            <div class="admin-title">Configuração de valores base (gestor)</div>
+            <div class="admin-row">
+              <div class="field-group">
+                <label for="adminValorSugerido">Valor sugerido (R$)</label>
+                <input id="adminValorSugerido" class="input-number" type="number" inputmode="decimal" />
+              </div>
+              <div class="field-group">
+                <label for="adminValorMinimo">Valor mínimo (R$)</label>
+                <input id="adminValorMinimo" class="input-number" type="number" inputmode="decimal" />
+              </div>
+            </div>
+            <div class="actions-row" style="margin-top:8px;">
+              <button class="btn-primary" onclick="salvarPrecosBase()">Salvar preços base</button>
+              <button class="btn-ghost" onclick="fecharAdmin()">Fechar modo admin</button>
+            </div>
+          </div>
+
+          <div class="footer-note">
+            Valores, comissões e cadastros ficam salvos localmente neste aparelho.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const kits = [
+      500, 600, 700, 800, 900,
+      1000, 1100, 1200, 1300, 1400,
+      1500, 1600, 1700, 1800, 1900,
+      2000, 2100, 2200, 2300, 2400, 2500
+    ];
+
+    const ADMIN_PIN = "0000";
+    const WHATSAPP_DESTINO = "559984162411";
+
+    let kitAtual = null;
+    let adminAtivo = false;
+
+    function renderKits(filter = "") {
+      const grid = document.getElementById('kitsGrid');
+      grid.innerHTML = "";
+      const normalizedFilter = filter.trim();
+      kits.forEach(k => {
+        if (!normalizedFilter || String(k).includes(normalizedFilter)) {
+          const card = document.createElement('div');
+          card.className = 'kit-card';
+          card.onclick = () => abrirKit(k);
+
+          const kwh = document.createElement('div');
+          kwh.className = 'kit-kwh';
+          kwh.textContent = `Kit ${k} kWh`;
+
+          const sub = document.createElement('div');
+          sub.className = 'kit-sub';
+          sub.textContent = 'Clique para simular e cadastrar cliente.';
+
+          const pill = document.createElement('div');
+          pill.className = 'kit-pill';
+          pill.textContent = '10% • 3% comissão';
+
+          card.appendChild(kwh);
+          card.appendChild(sub);
+          card.appendChild(pill);
+
+          grid.appendChild(card);
+        }
+      });
+    }
+
+    function filterKits() {
+      const value = document.getElementById('searchInput').value;
+      renderKits(value);
+    }
+
+    function abrirKit(k) {
+      kitAtual = k;
+      adminAtivo = false;
+      document.getElementById('adminPanel').classList.remove('active');
+      document.getElementById('home').classList.remove('active');
+      document.getElementById('kitView').classList.add('active');
+      document.getElementById('kitTitle').textContent = `KIT ${k} kWh`;
+      carregarPrecosBase();
+      limparSimulacaoVenda();
+      limparFormularioCadastro();
+      carregarResumoCadastros();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function goHome() {
+      document.getElementById('kitView').classList.remove('active');
+      document.getElementById('home').classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function formatBRL(v) {
+      if (isNaN(v) || v === null) return "R$ 0,00";
+      return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function carregarPrecosBase() {
+      const viewSug = document.getElementById('valorSugeridoView');
+      const viewMin = document.getElementById('valorMinimoView');
+      const viewComCheia = document.getElementById('comissaoCheiaView');
+      const viewComMin = document.getElementById('comissaoMinimaView');
+
+      viewSug.textContent = "R$ 0,00";
+      viewMin.textContent = "R$ 0,00";
+      viewComCheia.textContent = "R$ 0,00";
+      viewComMin.textContent = "R$ 0,00";
+
+      document.getElementById('adminValorSugerido').value = "";
+      document.getElementById('adminValorMinimo').value = "";
+
+      if (!kitAtual) return;
+
+      try {
+        const raw = localStorage.getItem(`kit_base_${kitAtual}`);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        const sug = parseFloat(data.sug || "0");
+        const min = parseFloat(data.min || "0");
+
+        viewSug.textContent = formatBRL(sug);
+        viewMin.textContent = formatBRL(min);
+        viewComCheia.textContent = formatBRL(sug * 0.10); // 10%
+        viewComMin.textContent = formatBRL(min * 0.03);   // 3%
+
+        document.getElementById('adminValorSugerido').value = data.sug || "";
+        document.getElementById('adminValorMinimo').value = data.min || "";
+      } catch (e) {}
+    }
+
+    function limparSimulacaoVenda() {
+      document.getElementById('valorVenda').value = "";
+      document.getElementById('comissaoVendaView').textContent =
+        "Venda: R$ 0,00 • Comissão: R$ 0,00 (0,00%)";
+      document.getElementById('mensagemVenda').textContent = "";
+      document.getElementById('mensagemVenda').className = "msg-erro";
+    }
+
+    function calcularComissaoVenda() {
+      if (!kitAtual) return;
+      const msg = document.getElementById('mensagemVenda');
+      const vendaInput = document.getElementById('valorVenda');
+      const vendaVal = parseFloat(vendaInput.value || "0");
+
+      msg.textContent = "";
+      msg.className = "msg-erro";
+
+      let sug = 0, min = 0;
+      try {
+        const raw = localStorage.getItem(`kit_base_${kitAtual}`);
+        if (raw) {
+          const data = JSON.parse(raw);
+          sug = parseFloat(data.sug || "0");
+          min = parseFloat(data.min || "0");
+        }
+      } catch (e) {}
+
+      if (!sug || !min || min >= sug) {
+        msg.textContent = "Gestor ainda não configurou os valores base deste kit.";
+        document.getElementById('comissaoVendaView').textContent =
+          "Venda: R$ 0,00 • Comissão: R$ 0,00 (0,00%)";
+        return;
+      }
+
+      if (!vendaVal || vendaVal <= 0) {
+        msg.textContent = "Informe um valor de venda válido.";
+        document.getElementById('comissaoVendaView').textContent =
+          "Venda: R$ 0,00 • Comissão: R$ 0,00 (0,00%)";
+        return;
+      }
+
+      if (vendaVal < min) {
+        msg.textContent = "Atenção: abaixo do valor mínimo permitido. Não autorizar venda.";
+        document.getElementById('comissaoVendaView').textContent =
+          "Venda: " + formatBRL(vendaVal) + " • Comissão: R$ 0,00 (0,00%)";
+        return;
+      }
+
+      let perc = 0.10; // máximo 10%
+      if (vendaVal < sug) {
+        const faixa = sug - min;
+        const pos = vendaVal - min;
+        const baseMin = 0.03; // mínimo 3%
+        const delta = 0.07;   // 10% - 3%
+        perc = baseMin + (pos / faixa) * delta;
+      }
+
+      if (perc > 0.10) perc = 0.10;
+      if (perc < 0.03) perc = 0.03;
+
+      const comissao = vendaVal * perc;
+      document.getElementById('comissaoVendaView').textContent =
+        "Venda: " + formatBRL(vendaVal) +
+        " • Comissão: " + formatBRL(comissao) +
+        " (" + (perc*100).toFixed(2).replace(".", ",") + "%)";
+
+      msg.textContent = "Cálculo realizado com sucesso.";
+      msg.className = "msg-ok";
+    }
+
+    function ativarAdmin() {
+      const pin = prompt("Digite o PIN do gestor:");
+      if (pin === ADMIN_PIN) {
+        adminAtivo = true;
+        document.getElementById('adminPanel').classList.add('active');
+      } else if (pin !== null) {
+        alert("PIN incorreto.");
+      }
+    }
+
+    function fecharAdmin() {
+      adminAtivo = false;
+      document.getElementById('adminPanel').classList.remove('active');
+    }
+
+    function salvarPrecosBase() {
+      if (!kitAtual || !adminAtivo) {
+        alert("Modo administrador não está ativo.");
+        return;
+      }
+      const sug = parseFloat(document.getElementById('adminValorSugerido').value || "0");
+      const min = parseFloat(document.getElementById('adminValorMinimo').value || "0");
+
+      if (!sug || !min || min >= sug) {
+        alert("Verifique os valores: sugerido deve ser maior que mínimo e ambos maiores que zero.");
+        return;
+      }
+
+      const data = { sug: String(sug), min: String(min) };
+      try {
+        localStorage.setItem(`kit_base_${kitAtual}`, JSON.stringify(data));
+        alert("Valores base salvos para o Kit " + kitAtual + " kWh.");
+        carregarPrecosBase();
+      } catch (e) {
+        alert("Não foi possível salvar. Verifique o armazenamento do aparelho.");
+      }
+    }
+
+    function limparFormularioCadastro() {
+      const ids = [
+        'cadVendedor','cadNome','cadNomeMae','cadCPF','cadCNPJ','cadNascimento','cadRG',
+        'cadContato','cadEmail','cadEstado','cadCidade','cadEndereco',
+        'cadProfissao','cadTempoProfissao','cadRenda'
+      ];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+      });
+      const msg = document.getElementById('mensagemCadastro');
+      if (msg) {
+        msg.textContent = "";
+        msg.className = "msg-erro";
+      }
+    }
+
+    function carregarResumoCadastros() {
+      const resumo = document.getElementById('resumoCadastros');
+      if (!resumo) return;
+      if (!kitAtual) {
+        resumo.textContent = "";
+        return;
+      }
+      try {
+        const raw = localStorage.getItem(`cadastros_kit_${kitAtual}`);
+        if (!raw) {
+          resumo.textContent = "Ainda não há cadastros para este kit.";
+          return;
+        }
+        const lista = JSON.parse(raw);
+        resumo.textContent = `Já existem ${lista.length} cadastro(s) salvos neste kit neste aparelho.`;
+      } catch (e) {
+        resumo.textContent = "";
+      }
+    }
+
+    function salvarCadastroCliente() {
+      const msg = document.getElementById('mensagemCadastro');
+      msg.className = "msg-erro";
+      msg.textContent = "";
+
+      if (!kitAtual) {
+        msg.textContent = "Abra um kit antes de cadastrar.";
+        return;
+      }
+
+      const camposObrigatorios = [
+        ['cadVendedor', 'Nome do vendedor'],
+        ['cadNome', 'Nome do cliente'],
+        ['cadNomeMae', 'Nome da mãe'],
+        ['cadCPF', 'CPF'],
+        ['cadNascimento', 'Data de nascimento'],
+        ['cadRG', 'RG'],
+        ['cadContato', 'Contato'],
+        ['cadEmail', 'E-mail'],
+        ['cadEstado', 'Estado'],
+        ['cadCidade', 'Cidade'],
+        ['cadEndereco', 'Endereço'],
+        ['cadProfissao', 'Profissão'],
+        ['cadTempoProfissao', 'Tempo de profissão'],
+        ['cadRenda', 'Renda mensal']
+      ];
+
+      for (const [id, label] of camposObrigatorios) {
+        const el = document.getElementById(id);
+        if (!el || !el.value.trim()) {
+          msg.textContent = `Preencha o campo obrigatório: ${label}.`;
+          return;
+        }
+      }
+
+      const vendedor = document.getElementById('cadVendedor').value.trim();
+      const nome = document.getElementById('cadNome').value.trim();
+      const nomeMae = document.getElementById('cadNomeMae').value.trim();
+      const cpf = document.getElementById('cadCPF').value.trim();
+      const cnpj = document.getElementById('cadCNPJ').value.trim();
+      const nascimento = document.getElementById('cadNascimento').value.trim();
+      const rg = document.getElementById('cadRG').value.trim();
+      const contato = document.getElementById('cadContato').value.trim();
+      const email = document.getElementById('cadEmail').value.trim();
+      const estado = document.getElementById('cadEstado').value.trim();
+      const cidade = document.getElementById('cadCidade').value.trim();
+      const endereco = document.getElementById('cadEndereco').value.trim();
+      const profissao = document.getElementById('cadProfissao').value.trim();
+      const tempoProfissao = document.getElementById('cadTempoProfissao').value.trim();
+      const renda = document.getElementById('cadRenda').value.trim();
+
+      const cadastro = {
+        vendedor,
+        nome,
+        nomeMae,
+        cpf,
+        cnpj,
+        nascimento,
+        rg,
+        contato,
+        email,
+        estado,
+        cidade,
+        endereco,
+        profissao,
+        tempoProfissao,
+        renda,
+        kit: kitAtual,
+        dataRegistro: new Date().toISOString()
+      };
+
+      let vendaVal = parseFloat(document.getElementById('valorVenda').value || "0");
+      let sug = 0, min = 0, perc = 0, comissao = 0;
+      try {
+        const rawBase = localStorage.getItem(`kit_base_${kitAtual}`);
+        if (rawBase) {
+          const baseData = JSON.parse(rawBase);
+          sug = parseFloat(baseData.sug || "0");
+          min = parseFloat(baseData.min || "0");
+        }
+      } catch (e) {}
+
+      if (vendaVal > 0 && sug && min && min < sug && vendaVal >= min) {
+        perc = 0.10;
+        if (vendaVal < sug) {
+          const faixa = sug - min;
+          const pos = vendaVal - min;
+          const baseMin = 0.03;
+          const delta = 0.07;
+          perc = baseMin + (pos / faixa) * delta;
+        }
+        if (perc > 0.10) perc = 0.10;
+        if (perc < 0.03) perc = 0.03;
+        comissao = vendaVal * perc;
+      } else {
+        vendaVal = 0;
+        perc = 0;
+        comissao = 0;
+      }
+
+      try {
+        const key = `cadastros_kit_${kitAtual}`;
+        const raw = localStorage.getItem(key);
+        let lista = [];
+        if (raw) {
+          lista = JSON.parse(raw);
+        }
+        lista.push(cadastro);
+        localStorage.setItem(key, JSON.stringify(lista));
+        msg.textContent = "Cadastro salvo com sucesso neste aparelho.";
+        msg.className = "msg-ok";
+        carregarResumoCadastros();
+      } catch (e) {
+        msg.textContent = "Não foi possível salvar o cadastro. Verifique o armazenamento do aparelho.";
+        msg.className = "msg-erro";
+        return;
+      }
+
+      const texto = `
+*NOVO CADASTRO - LÓTUS ENERGIA SOLAR*
+
+*Kit:* ${kitAtual} kWh
+
+*Valor sugerido:* ${formatBRL(sug || 0)}
+*Valor mínimo:* ${formatBRL(min || 0)}
+*Valor de venda:* ${formatBRL(vendaVal)}
+*Comissão do vendedor:* ${formatBRL(comissao)} ${perc ? "(" + (perc*100).toFixed(2).replace(".", ",") + "%)" : ""}
+
+*Vendedor:* ${cadastro.vendedor}
+
+*Cliente:* ${cadastro.nome}
+*Mãe do cliente:* ${cadastro.nomeMae || "-"}
+*CPF:* ${cadastro.cpf || "-"}
+*CNPJ:* ${cadastro.cnpj || "-"}
+*Data de nascimento:* ${cadastro.nascimento || "-"}
+*RG:* ${cadastro.rg || "-"}
+*Contato:* ${cadastro.contato}
+*E-mail:* ${cadastro.email || "-"}
+
+*Estado:* ${cadastro.estado || "-"}
+*Cidade:* ${cadastro.cidade || "-"}
+*Endereço:* ${cadastro.endereco || "-"}
+
+*Profissão:* ${cadastro.profissao || "-"}
+*Tempo de profissão:* ${cadastro.tempoProfissao || "-"}
+*Renda mensal:* ${cadastro.renda ? "R$ " + Number(cadastro.renda).toLocaleString("pt-BR") : "-"}
+
+*Registrado em:* ${new Date(cadastro.dataRegistro).toLocaleString("pt-BR")}
+`.trim();
+
+      const url = `https://wa.me/${WHATSAPP_DESTINO}?text=${encodeURIComponent(texto)}`;
+      window.open(url, "_blank");
+    }
+
+    /* MÁSCARAS DE CPF, RG, TELEFONE, NASCIMENTO, CNPJ */
+    function maskCPF(value) {
+      let v = value.replace(/\D/g, "").slice(0, 11);
+      if (v.length <= 3) return v;
+      if (v.length <= 6) return v.replace(/(\d{3})(\d+)/, "$1.$2");
+      if (v.length <= 9) return v.replace(/(\d{3})(\d{3})(\d+)/, "$1.$2.$3");
+      return v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, (m, a, b, c, d) =>
+        d ? `${a}.${b}.${c}-${d}` : `${a}.${b}.${c}`
+      );
+    }
+
+    function maskRG(value) {
+      return value.replace(/\D/g, "").slice(0, 20);
+    }
+
+    function maskTel(value) {
+      let v = value.replace(/\D/g, "").slice(0, 11);
+      if (v.length === 0) return "";
+      if (v.length <= 2) return "(" + v;
+      if (v.length <= 6) return `(${v.slice(0,2)}) ${v.slice(2)}`;
+      if (v.length <= 10) {
+        return `(${v.slice(0,2)}) ${v.slice(2, v.length-4)}-${v.slice(-4)}`;
+      }
+      return `(${v.slice(0,2)}) ${v.slice(2, 7)}-${v.slice(7,11)}`;
+    }
+
+    function maskData(value) {
+      let v = value.replace(/\D/g, "").slice(0, 8);
+      if (v.length <= 2) return v;
+      if (v.length <= 4) return v.replace(/(\d{2})(\d{1,2})/, "$1/$2");
+      return v.replace(/(\d{2})(\d{2})(\d{1,4})/, "$1/$2/$3");
+    }
+
+    function maskCNPJ(value) {
+      return value.replace(/\D/g, "").slice(0, 14);
+    }
+
+    function setupMasks() {
+      const cpfInput = document.getElementById('cadCPF');
+      const rgInput = document.getElementById('cadRG');
+      const telInput = document.getElementById('cadContato');
+      const nascInput = document.getElementById('cadNascimento');
+      const cnpjInput = document.getElementById('cadCNPJ');
+
+      if (cpfInput) cpfInput.addEventListener('input', e => e.target.value = maskCPF(e.target.value));
+      if (rgInput) rgInput.addEventListener('input', e => e.target.value = maskRG(e.target.value));
+      if (telInput) telInput.addEventListener('input', e => e.target.value = maskTel(e.target.value));
+      if (nascInput) nascInput.addEventListener('input', e => e.target.value = maskData(e.target.value));
+      if (cnpjInput) cnpjInput.addEventListener('input', e => e.target.value = maskCNPJ(e.target.value));
+    }
+
+    renderKits();
+    setupMasks();
+  </script>
+</body>
+</html>
