@@ -617,7 +617,7 @@
           </div>
 
           <div class="footer-note">
-            Valores, comissões e cadastros são salvos localmente e também na base online (Google Sheets).
+            Valores, comissões e cadastros ficam salvos online na planilha da Lótus.
           </div>
         </div>
 
@@ -636,27 +636,45 @@
     const ADMIN_PIN = "0000";
     const WHATSAPP_DESTINO = "559984162411";
 
-    // 🔴 AQUI É A SUA API DO GOOGLE APPS SCRIPT
-    // Se você recriar o Web App depois, pode trocar essa URL.
-    const BACKEND_URL = "https://script.google.com/macros/s/AKfycbzApjGtfnILSFQvJ9Br0kv2LaWImllqTTwyuvcgNyr6Iv8CcidUrV85HY1pZigGdKEomQ/exec";
+    // URL do seu Apps Script publicado como Web App (a que você mandou)
+    const BACKEND_URL = "https://script.google.com/macros/s/AKfycbxBodDkDOaokJsWmcyt_VRoeXvSz7SQggLZG3Uibdk4eSpqOs61Xv1XKn5srT6gYjDovQ/exec";
 
-    // Função genérica para enviar dados pro servidor (planilha)
+    let kitAtual = null;
+    let adminAtivo = false;
+    let valorSugeridoBase = 0;
+    let valorMinimoBase = 0;
+
+    // --------- FUNÇÕES DE REDE (ONLINE) ----------
     async function salvarNoServidor(payload) {
       try {
-        await fetch(BACKEND_URL, {
+        const res = await fetch(BACKEND_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-        // Se quiser ver retorno, dá pra usar console.log aqui
+        try {
+          return await res.json();
+        } catch (e) {
+          return { success: true };
+        }
       } catch (erro) {
         console.error("Erro ao salvar no servidor:", erro);
+        return { success: false, error: "Falha de rede" };
       }
     }
 
-    let kitAtual = null;
-    let adminAtivo = false;
+    async function buscarNoServidor(params) {
+      const url = BACKEND_URL + "?" + new URLSearchParams(params).toString();
+      try {
+        const res = await fetch(url);
+        return await res.json();
+      } catch (erro) {
+        console.error("Erro ao buscar no servidor:", erro);
+        return null;
+      }
+    }
 
+    // --------- FRONTEND (TELAS) ----------
     function renderKits(filter = "") {
       const grid = document.getElementById('kitsGrid');
       grid.innerHTML = "";
@@ -693,17 +711,17 @@
       renderKits(value);
     }
 
-    function abrirKit(k) {
+    async function abrirKit(k) {
       kitAtual = k;
       adminAtivo = false;
       document.getElementById('adminPanel').classList.remove('active');
       document.getElementById('home').classList.remove('active');
       document.getElementById('kitView').classList.add('active');
       document.getElementById('kitTitle').textContent = `KIT ${k} kWh`;
-      carregarPrecosBase();
+      await carregarPrecosBase();
       limparSimulacaoVenda();
       limparFormularioCadastro();
-      carregarResumoCadastros();
+      await carregarResumoCadastros();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -715,16 +733,16 @@
 
     function formatBRL(v) {
       if (isNaN(v) || v === null) return "R$ 0,00";
-      return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
+    // ---------- CARREGAR PREÇOS BASE (ONLINE) ----------
     async function carregarPrecosBase() {
       const viewSug = document.getElementById('valorSugeridoView');
       const viewMin = document.getElementById('valorMinimoView');
       const viewComCheia = document.getElementById('comissaoCheiaView');
       const viewComMin = document.getElementById('comissaoMinimaView');
 
-      // Zera visualmente
       viewSug.textContent = "R$ 0,00";
       viewMin.textContent = "R$ 0,00";
       viewComCheia.textContent = "R$ 0,00";
@@ -733,60 +751,26 @@
       document.getElementById('adminValorSugerido').value = "";
       document.getElementById('adminValorMinimo').value = "";
 
+      valorSugeridoBase = 0;
+      valorMinimoBase = 0;
+
       if (!kitAtual) return;
 
-      let sug = 0;
-      let min = 0;
-
-      // 1) Tenta buscar da base online (Google Apps Script)
-      try {
-        const resp = await fetch(`${BACKEND_URL}?tipo=kit_base&kit=${kitAtual}`);
-        if (resp.ok) {
-          const result = await resp.json();
-          if (result && result.success && !result.vazio) {
-            sug = parseFloat(result.sug || "0");
-            min = parseFloat(result.min || "0");
-
-            // Guarda local também (cache)
-            const dataBase = { sug: String(sug), min: String(min) };
-            try {
-              localStorage.setItem(`kit_base_${kitAtual}`, JSON.stringify(dataBase));
-            } catch (e) {
-              console.warn("Não foi possível salvar cache local de kit_base:", e);
-            }
-          }
-        }
-      } catch (e) {
-        console.warn("Erro ao buscar valores base no servidor:", e);
-      }
-
-      // 2) Se não conseguiu pela internet, tenta localStorage
-      if (!sug || !min || min >= sug) {
-        try {
-          const raw = localStorage.getItem(`kit_base_${kitAtual}`);
-          if (raw) {
-            const dataLocal = JSON.parse(raw);
-            sug = parseFloat(dataLocal.sug || "0");
-            min = parseFloat(dataLocal.min || "0");
-          }
-        } catch (e) {
-          console.warn("Erro ao ler valores base do localStorage:", e);
-        }
-      }
-
-      // 3) Se ainda assim não tiver base válida, deixa zerado
-      if (!sug || !min || min >= sug) {
+      const data = await buscarNoServidor({ tipo: "kit_base", kit: kitAtual });
+      if (!data || !data.success || data.notFound) {
         return;
       }
 
-      // 4) Atualiza a tela
-      viewSug.textContent = formatBRL(sug);
-      viewMin.textContent = formatBRL(min);
-      viewComCheia.textContent = formatBRL(sug * 0.10);
-      viewComMin.textContent = formatBRL(min * 0.03);
+      valorSugeridoBase = Number(data.sug);
+      valorMinimoBase = Number(data.min);
 
-      document.getElementById('adminValorSugerido').value = String(sug);
-      document.getElementById('adminValorMinimo').value = String(min);
+      viewSug.textContent = formatBRL(valorSugeridoBase);
+      viewMin.textContent = formatBRL(valorMinimoBase);
+      viewComCheia.textContent = formatBRL(valorSugeridoBase * 0.10);
+      viewComMin.textContent = formatBRL(valorMinimoBase * 0.03);
+
+      document.getElementById('adminValorSugerido').value = valorSugeridoBase;
+      document.getElementById('adminValorMinimo').value = valorMinimoBase;
     }
 
     function limparSimulacaoVenda() {
@@ -806,15 +790,8 @@
       msg.textContent = "";
       msg.className = "msg-erro";
 
-      let sug = 0, min = 0;
-      try {
-        const raw = localStorage.getItem(`kit_base_${kitAtual}`);
-        if (raw) {
-          const data = JSON.parse(raw);
-          sug = parseFloat(data.sug || "0");
-          min = parseFloat(data.min || "0");
-        }
-      } catch (e) {}
+      const sug = valorSugeridoBase;
+      const min = valorMinimoBase;
 
       if (!sug || !min || min >= sug) {
         msg.textContent = "Gestor ainda não configurou os valores base deste kit.";
@@ -874,7 +851,7 @@
       document.getElementById('adminPanel').classList.remove('active');
     }
 
-    // 🔵 AGORA SALVA LOCAL + ENVIA PARA A API
+    // ---------- SALVAR PREÇOS BASE (ONLINE) ----------
     async function salvarPrecosBase() {
       if (!kitAtual || !adminAtivo) {
         alert("Modo administrador não está ativo.");
@@ -888,24 +865,20 @@
         return;
       }
 
-      const dataBase = { sug: String(sug), min: String(min) };
-
-      try {
-        localStorage.setItem(`kit_base_${kitAtual}`, JSON.stringify(dataBase));
-      } catch (e) {
-        console.warn("Erro ao salvar localmente:", e);
-      }
-
-      // Envia para a planilha (Apps Script)
-      salvarNoServidor({
+      const resp = await salvarNoServidor({
         tipo: "kit_base",
         kit: kitAtual,
         sug: sug,
         min: min
       });
 
-      alert("Valores base salvos para o Kit " + kitAtual + " kWh.\n(Enviados também para o servidor)");
-      carregarPrecosBase();
+      if (!resp || resp.success !== true) {
+        alert("Erro ao salvar valores no servidor.");
+        return;
+      }
+
+      alert("Valores base salvos para o Kit " + kitAtual + " kWh (online).");
+      await carregarPrecosBase();
     }
 
     function limparFormularioCadastro() {
@@ -925,6 +898,7 @@
       }
     }
 
+    // ---------- RESUMO DE CADASTROS (ONLINE) ----------
     async function carregarResumoCadastros() {
       const resumo = document.getElementById('resumoCadastros');
       if (!resumo) return;
@@ -933,35 +907,17 @@
         return;
       }
 
-      // 1) Tenta buscar resumo na base online
-      try {
-        const resp = await fetch(`${BACKEND_URL}?tipo=resumo&kit=${kitAtual}`);
-        if (resp.ok) {
-          const result = await resp.json();
-          if (result && result.success && typeof result.totalCadastros === "number") {
-            resumo.textContent = `Já existem ${result.totalCadastros} cadastro(s) deste kit na base online.`;
-            return;
-          }
-        }
-      } catch (e) {
-        console.warn("Erro ao buscar resumo de cadastros no servidor:", e);
+      const data = await buscarNoServidor({ tipo: "cadastro_resumo", kit: kitAtual });
+      if (!data || !data.success) {
+        resumo.textContent = "";
+        return;
       }
 
-      // 2) Se não conseguiu pela internet, cai pro localStorage
-      try {
-        const raw = localStorage.getItem(`cadastros_kit_${kitAtual}`);
-        if (!raw) {
-          resumo.textContent = "Ainda não há cadastros para este kit neste aparelho.";
-          return;
-        }
-        const lista = JSON.parse(raw);
-        resumo.textContent = `Já existem ${lista.length} cadastro(s) salvos neste kit neste aparelho.`;
-      } catch (e) {
-        resumo.textContent = "";
-      }
+      resumo.textContent = `Já existem ${data.count || 0} cadastro(s) salvos online para este kit.`;
     }
 
-    function salvarCadastroCliente() {
+    // ---------- SALVAR CADASTRO (ONLINE) ----------
+    async function salvarCadastroCliente() {
       const msg = document.getElementById('mensagemCadastro');
       msg.className = "msg-erro";
       msg.textContent = "";
@@ -1033,15 +989,10 @@
       };
 
       let vendaVal = parseFloat(document.getElementById('valorVenda').value || "0");
-      let sug = 0, min = 0, perc = 0, comissao = 0;
-      try {
-        const rawBase = localStorage.getItem(`kit_base_${kitAtual}`);
-        if (rawBase) {
-          const baseData = JSON.parse(rawBase);
-          sug = parseFloat(baseData.sug || "0");
-          min = parseFloat(baseData.min || "0");
-        }
-      } catch (e) {}
+      let sug = valorSugeridoBase;
+      let min = valorMinimoBase;
+      let perc = 0;
+      let comissao = 0;
 
       if (vendaVal > 0 && sug && min && min < sug && vendaVal >= min) {
         perc = 0.10;
@@ -1061,26 +1012,7 @@
         comissao = 0;
       }
 
-      try {
-        const key = `cadastros_kit_${kitAtual}`;
-        const raw = localStorage.getItem(key);
-        let lista = [];
-        if (raw) {
-          lista = JSON.parse(raw);
-        }
-        lista.push(cadastro);
-        localStorage.setItem(key, JSON.stringify(lista));
-        msg.textContent = "Cadastro salvo com sucesso neste aparelho.";
-        msg.className = "msg-ok";
-        carregarResumoCadastros();
-      } catch (e) {
-        msg.textContent = "Não foi possível salvar o cadastro. Verifique o armazenamento do aparelho.";
-        msg.className = "msg-erro";
-        return;
-      }
-
-      // Envia cadastro também para a planilha
-      salvarNoServidor({
+      const resp = await salvarNoServidor({
         tipo: "cadastro",
         kit: kitAtual,
         cadastro: cadastro,
@@ -1088,6 +1020,16 @@
         perc: perc,
         comissao: comissao
       });
+
+      if (!resp || resp.success !== true) {
+        msg.textContent = "Não foi possível salvar o cadastro online.";
+        msg.className = "msg-erro";
+        return;
+      }
+
+      msg.textContent = "Cadastro salvo com sucesso (online).";
+      msg.className = "msg-ok";
+      await carregarResumoCadastros();
 
       const texto = `
 *NOVO CADASTRO - LÓTUS ENERGIA SOLAR*
@@ -1125,6 +1067,7 @@
       window.open(url, "_blank");
     }
 
+    // ---------- MÁSCARAS ----------
     function maskCPF(value) {
       let v = value.replace(/\D/g, "").slice(0, 11);
       if (v.length <= 3) return v;
@@ -1175,6 +1118,7 @@
       if (cnpjInput) cnpjInput.addEventListener('input', e => e.target.value = maskCNPJ(e.target.value));
     }
 
+    // Inicialização
     renderKits();
     setupMasks();
   </script>
