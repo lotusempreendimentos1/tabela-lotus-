@@ -32,7 +32,7 @@
     }
     .app-shell {
       width: 100%;
-      max-width: 900px; /* mais largo para desktop */
+      max-width: 900px;
       min-height: 100vh;
       padding: 18px 16px 24px;
       display: flex;
@@ -61,7 +61,6 @@
       z-index: 1;
     }
 
-    /* HEADER (sem logo) */
     .header {
       display: flex;
       align-items: flex-start;
@@ -151,7 +150,7 @@
     }
     .kit-card {
       position: relative;
-      padding: 10px 11px;
+      padding: 10px 11px 28px;
       border-radius: 16px;
       background: radial-gradient(circle at 0 0, rgba(37,99,235,0.2), rgba(15,23,42,0.98));
       border: 1px solid rgba(30,64,175,0.95);
@@ -174,13 +173,14 @@
       font-size: 11px;
       color: #93c5fd;
       margin-top: 2px;
+      margin-right: 60px;
     }
     .kit-pill {
       position: absolute;
-      right: 9px;
-      bottom: 8px;
+      right: 10px;
+      bottom: 6px;
       font-size: 10px;
-      padding: 3px 8px;
+      padding: 4px 8px;
       border-radius: 999px;
       border: 1px solid rgba(148,163,184,0.6);
       color: #bfdbfe;
@@ -636,6 +636,24 @@
     const ADMIN_PIN = "0000";
     const WHATSAPP_DESTINO = "559984162411";
 
+    // 🔴 AQUI É A SUA API DO GOOGLE APPS SCRIPT
+    // Se você recriar o Web App depois, pode trocar essa URL.
+    const BACKEND_URL = "https://script.google.com/macros/s/AKfycbzApjGtfnILSFQvJ9Br0kv2LaWImllqTTwyuvcgNyr6Iv8CcidUrV85HY1pZigGdKEomQ/exec";
+
+    // Função genérica para enviar dados pro servidor (planilha)
+    async function salvarNoServidor(payload) {
+      try {
+        await fetch(BACKEND_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        // Se quiser ver retorno, dá pra usar console.log aqui
+      } catch (erro) {
+        console.error("Erro ao salvar no servidor:", erro);
+      }
+    }
+
     let kitAtual = null;
     let adminAtivo = false;
 
@@ -725,8 +743,8 @@
 
         viewSug.textContent = formatBRL(sug);
         viewMin.textContent = formatBRL(min);
-        viewComCheia.textContent = formatBRL(sug * 0.10); // 10%
-        viewComMin.textContent = formatBRL(min * 0.03);   // 3%
+        viewComCheia.textContent = formatBRL(sug * 0.10);
+        viewComMin.textContent = formatBRL(min * 0.03);
 
         document.getElementById('adminValorSugerido').value = data.sug || "";
         document.getElementById('adminValorMinimo').value = data.min || "";
@@ -781,12 +799,12 @@
         return;
       }
 
-      let perc = 0.10; // máximo 10%
+      let perc = 0.10;
       if (vendaVal < sug) {
         const faixa = sug - min;
         const pos = vendaVal - min;
-        const baseMin = 0.03; // mínimo 3%
-        const delta = 0.07;   // 10% - 3%
+        const baseMin = 0.03;
+        const delta = 0.07;
         perc = baseMin + (pos / faixa) * delta;
       }
 
@@ -818,7 +836,8 @@
       document.getElementById('adminPanel').classList.remove('active');
     }
 
-    function salvarPrecosBase() {
+    // 🔵 AGORA SALVA LOCAL + ENVIA PARA A API
+    async function salvarPrecosBase() {
       if (!kitAtual || !adminAtivo) {
         alert("Modo administrador não está ativo.");
         return;
@@ -831,14 +850,24 @@
         return;
       }
 
-      const data = { sug: String(sug), min: String(min) };
+      const dataBase = { sug: String(sug), min: String(min) };
+
       try {
-        localStorage.setItem(`kit_base_${kitAtual}`, JSON.stringify(data));
-        alert("Valores base salvos para o Kit " + kitAtual + " kWh.");
-        carregarPrecosBase();
+        localStorage.setItem(`kit_base_${kitAtual}`, JSON.stringify(dataBase));
       } catch (e) {
-        alert("Não foi possível salvar. Verifique o armazenamento do aparelho.");
+        console.warn("Erro ao salvar localmente:", e);
       }
+
+      // Envia para a planilha (Apps Script)
+      salvarNoServidor({
+        tipo: "kit_base",
+        kit: kitAtual,
+        sug: sug,
+        min: min
+      });
+
+      alert("Valores base salvos para o Kit " + kitAtual + " kWh.\n(Enviados também para o servidor)");
+      carregarPrecosBase();
     }
 
     function limparFormularioCadastro() {
@@ -996,6 +1025,16 @@
         return;
       }
 
+      // Envia cadastro também para a planilha
+      salvarNoServidor({
+        tipo: "cadastro",
+        kit: kitAtual,
+        cadastro: cadastro,
+        vendaVal: vendaVal,
+        perc: perc,
+        comissao: comissao
+      });
+
       const texto = `
 *NOVO CADASTRO - LÓTUS ENERGIA SOLAR*
 
@@ -1032,7 +1071,6 @@
       window.open(url, "_blank");
     }
 
-    /* MÁSCARAS DE CPF, RG, TELEFONE, NASCIMENTO, CNPJ */
     function maskCPF(value) {
       let v = value.replace(/\D/g, "").slice(0, 11);
       if (v.length <= 3) return v;
