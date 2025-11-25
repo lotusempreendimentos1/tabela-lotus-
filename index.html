@@ -617,7 +617,7 @@
           </div>
 
           <div class="footer-note">
-            Valores, comissões e cadastros ficam salvos localmente neste aparelho.
+            Valores, comissões e cadastros são salvos localmente e também na base online (Google Sheets).
           </div>
         </div>
 
@@ -718,12 +718,13 @@
       return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
-    function carregarPrecosBase() {
+    async function carregarPrecosBase() {
       const viewSug = document.getElementById('valorSugeridoView');
       const viewMin = document.getElementById('valorMinimoView');
       const viewComCheia = document.getElementById('comissaoCheiaView');
       const viewComMin = document.getElementById('comissaoMinimaView');
 
+      // Zera visualmente
       viewSug.textContent = "R$ 0,00";
       viewMin.textContent = "R$ 0,00";
       viewComCheia.textContent = "R$ 0,00";
@@ -734,21 +735,58 @@
 
       if (!kitAtual) return;
 
+      let sug = 0;
+      let min = 0;
+
+      // 1) Tenta buscar da base online (Google Apps Script)
       try {
-        const raw = localStorage.getItem(`kit_base_${kitAtual}`);
-        if (!raw) return;
-        const data = JSON.parse(raw);
-        const sug = parseFloat(data.sug || "0");
-        const min = parseFloat(data.min || "0");
+        const resp = await fetch(`${BACKEND_URL}?tipo=kit_base&kit=${kitAtual}`);
+        if (resp.ok) {
+          const result = await resp.json();
+          if (result && result.success && !result.vazio) {
+            sug = parseFloat(result.sug || "0");
+            min = parseFloat(result.min || "0");
 
-        viewSug.textContent = formatBRL(sug);
-        viewMin.textContent = formatBRL(min);
-        viewComCheia.textContent = formatBRL(sug * 0.10);
-        viewComMin.textContent = formatBRL(min * 0.03);
+            // Guarda local também (cache)
+            const dataBase = { sug: String(sug), min: String(min) };
+            try {
+              localStorage.setItem(`kit_base_${kitAtual}`, JSON.stringify(dataBase));
+            } catch (e) {
+              console.warn("Não foi possível salvar cache local de kit_base:", e);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Erro ao buscar valores base no servidor:", e);
+      }
 
-        document.getElementById('adminValorSugerido').value = data.sug || "";
-        document.getElementById('adminValorMinimo').value = data.min || "";
-      } catch (e) {}
+      // 2) Se não conseguiu pela internet, tenta localStorage
+      if (!sug || !min || min >= sug) {
+        try {
+          const raw = localStorage.getItem(`kit_base_${kitAtual}`);
+          if (raw) {
+            const dataLocal = JSON.parse(raw);
+            sug = parseFloat(dataLocal.sug || "0");
+            min = parseFloat(dataLocal.min || "0");
+          }
+        } catch (e) {
+          console.warn("Erro ao ler valores base do localStorage:", e);
+        }
+      }
+
+      // 3) Se ainda assim não tiver base válida, deixa zerado
+      if (!sug || !min || min >= sug) {
+        return;
+      }
+
+      // 4) Atualiza a tela
+      viewSug.textContent = formatBRL(sug);
+      viewMin.textContent = formatBRL(min);
+      viewComCheia.textContent = formatBRL(sug * 0.10);
+      viewComMin.textContent = formatBRL(min * 0.03);
+
+      document.getElementById('adminValorSugerido').value = String(sug);
+      document.getElementById('adminValorMinimo').value = String(min);
     }
 
     function limparSimulacaoVenda() {
@@ -887,17 +925,33 @@
       }
     }
 
-    function carregarResumoCadastros() {
+    async function carregarResumoCadastros() {
       const resumo = document.getElementById('resumoCadastros');
       if (!resumo) return;
       if (!kitAtual) {
         resumo.textContent = "";
         return;
       }
+
+      // 1) Tenta buscar resumo na base online
+      try {
+        const resp = await fetch(`${BACKEND_URL}?tipo=resumo&kit=${kitAtual}`);
+        if (resp.ok) {
+          const result = await resp.json();
+          if (result && result.success && typeof result.totalCadastros === "number") {
+            resumo.textContent = `Já existem ${result.totalCadastros} cadastro(s) deste kit na base online.`;
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Erro ao buscar resumo de cadastros no servidor:", e);
+      }
+
+      // 2) Se não conseguiu pela internet, cai pro localStorage
       try {
         const raw = localStorage.getItem(`cadastros_kit_${kitAtual}`);
         if (!raw) {
-          resumo.textContent = "Ainda não há cadastros para este kit.";
+          resumo.textContent = "Ainda não há cadastros para este kit neste aparelho.";
           return;
         }
         const lista = JSON.parse(raw);
